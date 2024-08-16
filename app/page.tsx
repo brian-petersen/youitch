@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+type Dispatch = (show: boolean) => void
 
 type SectionProps = {
   title: string,
@@ -27,10 +29,13 @@ function Section({ title, show, className, onHide, onShow, children }: SectionPr
   )
 }
 
-type Dispatch = (show: boolean) => void
-
 export default function Home() {
-  const hostname = document.location.hostname
+  // TODO improve how the hostname is loaded (don't render anything until it's ready maybe?)
+  let [hostname, setHostname] = useState<string | null>(null)
+
+  useEffect(() => {
+    setHostname(document.location.hostname)
+  }, [])
 
   const twitchHandle = "emongg"
   const youtubeVideo = "7EiK8PMccwQ"
