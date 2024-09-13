@@ -1,4 +1,4 @@
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file
 
 app = 'youitch'
 primary_region = 'sjc'
@@ -14,4 +14,6 @@ primary_region = 'sjc'
   processes = ['app']
 
 [[vm]]
-  size = 'shared-cpu-1x'
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
