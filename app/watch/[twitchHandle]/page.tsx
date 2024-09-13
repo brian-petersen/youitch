@@ -1,30 +1,9 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 
+import { getKnownCreators, isKnownCreator } from "@/lib/creators";
 import LivePortal from "../../components/LivePortal";
-
-const creators = [
-  {
-    name: "Emongg",
-    twitchHandle: "emongg",
-    youtubeVideo: "pjcR6O8BES8",
-  },
-  {
-    name: "Jay3",
-    twitchHandle: "jay3",
-    youtubeVideo: "pjcR6O8BES8",
-  },
-  {
-    name: "ThePrimagen",
-    twitchHandle: "theprimeagen",
-    youtubeVideo: "eRb3pD5tDN0",
-  },
-  {
-    name: "HealthyGamerGG",
-    twitchHandle: "healthygamer_gg",
-    youtubeVideo: "X-s6WeLOOck",
-  },
-];
+import { getGlobalClients } from "@/lib/startup";
 
 type WatchProps = {
   params: {
@@ -32,16 +11,23 @@ type WatchProps = {
   };
 };
 
-export default function Watch({ params: { twitchHandle } }: WatchProps) {
-  const creator = creators.find((c) => c.twitchHandle === twitchHandle);
-
-  if (!creator) {
+export default async function Watch({ params: { twitchHandle } }: WatchProps) {
+  if (!isKnownCreator(twitchHandle)) {
     notFound();
   }
 
-  const { name, youtubeVideo } = creator;
-
   const hostname = getHostname();
+
+  const { twitchClient } = getGlobalClients()
+  const [creators, error] = await getKnownCreators(twitchClient);
+  if (creators === null) {
+    throw new Error(`Failed to load creators: ${error}`)
+  }
+
+  const creator = creators.find(c => c.twitchHandle === twitchHandle);
+  if (!creator) {
+    throw new Error('Failed to find creator in list after verified as known')
+  }
 
   return (
     <div className="h-screen flex flex-col">
@@ -51,7 +37,7 @@ export default function Watch({ params: { twitchHandle } }: WatchProps) {
           role="button"
           className="btn btn-outline btn-primary text-xl mt-3 ml-3"
         >
-          {name}
+          {creator.name}
         </div>
 
         <ul
@@ -67,8 +53,7 @@ export default function Watch({ params: { twitchHandle } }: WatchProps) {
       </div>
 
       <LivePortal
-        twitchHandle={twitchHandle}
-        youtubeVideo={youtubeVideo}
+        creator={creator}
         hostname={hostname}
       />
     </div>

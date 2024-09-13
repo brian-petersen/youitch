@@ -1,6 +1,9 @@
 "use client";
 
+import { Creator } from "@/lib/creators";
 import { useState } from "react";
+
+const youtubeNotFound = <div className="p-3 text-2xl">No YouTube stream found :(</div>;
 
 type SectionProps = {
   title: React.ReactNode;
@@ -23,7 +26,7 @@ function Section({ title, className, onHide, children }: SectionProps) {
           &times;
         </button>
       </div>
-      <div className="grow">{children}</div>
+      <div className="grow flex items-center place-content-center">{children}</div>
     </div>
   );
 }
@@ -44,24 +47,26 @@ function FooterButton({ title, onClick }: FooterButtonProps) {
   );
 }
 
-type LivePortalProps = {
-  hostname: string;
-  twitchHandle: string;
-  youtubeVideo: string;
-};
-
 type Dispatch = (show: boolean) => void;
 
+type LivePortalProps = {
+  creator: Creator,
+  hostname: string;
+};
+
 export default function LivePortal({
+  creator,
   hostname,
-  twitchHandle,
-  youtubeVideo,
 }: LivePortalProps) {
-  const [showYoutubeVideo, setShowYoutubeVideo] = useState(true);
-  const [showTwitchVideo, setShowTwitchVideo] = useState(false);
+  const { twitchHandle, youtubeVideoId } = creator
+
+  const youtubeStreamFound = creator.youtubeStatus === 'streaming' && creator.youtubeVideoId !== null
+
+  const [showYoutubeVideo, setShowYoutubeVideo] = useState(youtubeStreamFound);
+  const [showTwitchVideo, setShowTwitchVideo] = useState(!youtubeStreamFound);
 
   const [showTwitchChat, setShowTwitchChat] = useState(true);
-  const [showYoutubeChat, setShowYoutubeChat] = useState(true);
+  const [showYoutubeChat, setShowYoutubeChat] = useState(youtubeStreamFound);
 
   const handleHide = (dispatch: Dispatch) => () => {
     dispatch(false);
@@ -78,21 +83,31 @@ export default function LivePortal({
           {showYoutubeVideo && (
             <Section
               title={
-                <a
-                  className="link"
-                  href={`https://www.youtube.com/watch?v=${youtubeVideo}`}
-                >
-                  YouTube Video
-                </a>
+                <>
+                  {youtubeStreamFound && <a
+                    className="link"
+                    href={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
+                  >
+                    YouTube Video
+                  </a>}
+                  {!youtubeStreamFound && <div> YouTube Video </div>}
+                </>
               }
               onHide={handleHide(setShowYoutubeVideo)}
               className="grow"
             >
-              <iframe
-                className="h-full w-full"
-                src={`https://www.youtube.com/embed/${youtubeVideo}`}
-                allowFullScreen
-              ></iframe>
+
+              <>
+                {youtubeStreamFound &&
+                  <iframe
+                    className="h-full w-full"
+                    src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                    allowFullScreen
+                  ></iframe>
+                }
+
+                {!youtubeStreamFound && youtubeNotFound}
+              </>
             </Section>
           )}
 
@@ -130,11 +145,17 @@ export default function LivePortal({
 
         {showYoutubeChat && (
           <Section title="YouTube Chat" onHide={handleHide(setShowYoutubeChat)}>
+
+              <>
+                {youtubeStreamFound &&
             <iframe
               className="h-full"
               width="350"
-              src={`https://www.youtube.com/live_chat?v=${youtubeVideo}&embed_domain=${hostname}&dark_theme=1`}
+              src={`https://www.youtube.com/live_chat?v=${youtubeVideoId}&embed_domain=${hostname}&dark_theme=1`}
             ></iframe>
+                }
+                {!youtubeStreamFound && youtubeNotFound}
+              </>
           </Section>
         )}
       </div>
